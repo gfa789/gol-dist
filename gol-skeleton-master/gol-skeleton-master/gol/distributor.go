@@ -39,9 +39,12 @@ func getAliveCells(world [][]byte, p Params) []util.Cell {
 func makeCall(client *rpc.Client, world [][]byte, workernum int, p Params) {
 	request := stubs.Request{World: world, WorkerNum: workernum, Threads: p.Threads, Turns: p.Turns}
 	response := new(stubs.Response)
-	fmt.Println("Calling")
 	client.Call(stubs.TurnHandler, request, response)
-	fmt.Println("Responded")
+	for i := 0; i < p.ImageHeight; i++ {
+		for j := 0; j < p.ImageWidth; j++ {
+			world[i][j] = response.World[i][j]
+		}
+	}
 }
 
 // distributor divides the work between workers and interacts with other goroutines.
@@ -63,18 +66,11 @@ func distributor(p Params, c distributorChannels) {
 		}
 	}
 	// TODO: Execute all turns of the Game of Life.
-	//creates an array of output channels for the workers to put their chunks in
-	// chanoutarray := []chan [][]byte{}
-	// for i := 0; i < p.Threads; i++ {
-	// 	chanout := make(chan [][]byte)
-	// 	chanoutarray = append(chanoutarray, chanout)
-	// }
 	if p.Threads == 1 {
 		server := flag.String("server", "127.0.0.1:8030", "IP:port string to connect to as server")
 		flag.Parse()
 		client, _ := rpc.Dial("tcp", *server)
 		defer client.Close()
-		fmt.Println("Making call")
 		makeCall(client, world, 0, p)
 		fmt.Println("Call made")
 	}
