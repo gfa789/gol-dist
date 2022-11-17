@@ -77,15 +77,19 @@ func calculateNextState(world [][]byte, starty, endy int) [][]byte {
 type BoardOperations struct{}
 
 func (s *BoardOperations) CalculateNextBoard(req stubs.Request, res *stubs.Response) (err error) {
+	fmt.Println("Method called")
 	height := len(req.World)
 	starth := int(math.Ceil(float64(req.WorkerNum) * (float64(height) / float64(req.Threads))))
 	endh := int(math.Ceil(float64(req.WorkerNum+1) * (float64(height) / float64(req.Threads))))
 	fmt.Println("Got World")
-	res.World = calculateNextState(req.World, starth, endh)
+	for i := 0; i < req.Turns; i++ {
+		res.World = calculateNextState(req.World, starth, endh)
+	}
 	return
 }
 
 func main() {
+	fmt.Println("Listening")
 	pAddr := flag.String("port", "8030", "Port to listen on")
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
@@ -93,4 +97,5 @@ func main() {
 	listener, _ := net.Listen("tcp", ":"+*pAddr)
 	defer listener.Close()
 	rpc.Accept(listener)
+	fmt.Println("Listener accepted")
 }
