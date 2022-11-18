@@ -79,24 +79,13 @@ type BoardOperations struct{}
 func (s *BoardOperations) CalculateNextBoard(req stubs.Request, res *stubs.Response) (err error) {
 	fmt.Println("Method called")
 	height := len(req.World)
-	width := len(req.World[0])
+	// width := len(req.World[0])
 	starth := int(math.Ceil(float64(req.WorkerNum) * (float64(height) / float64(req.Threads))))
 	endh := int(math.Ceil(float64(req.WorkerNum+1) * (float64(height) / float64(req.Threads))))
 	fmt.Println("Got World")
-	newWorld := make([][]byte, len(req.World))
-	res.World = make([][]byte, len(req.World))
-	for i := 0; i < len(req.World[0]); i++ {
-		newWorld[i] = make([]byte, len(req.World[0]))
-		res.World[i] = make([]byte, len(req.World[0]))
-	}
-	for i := 0; i < req.Turns; i++ {
+	for i := 0; i < req.Turns-1; i++ {
 		fmt.Println("Turn Done")
-		newWorld = calculateNextState(req.World, starth, endh)
-	}
-	for i := 0; height > i; i++ {
-		for j := 0; j < width; j++ {
-			res.World[i][j] = newWorld[i][j]
-		}
+		res.World = calculateNextState(res.World, starth, endh)
 	}
 	return
 }

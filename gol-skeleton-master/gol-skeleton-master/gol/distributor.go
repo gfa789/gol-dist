@@ -3,6 +3,7 @@ package gol
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/rpc"
 	"strconv"
 
@@ -38,24 +39,44 @@ func getAliveCells(world [][]byte, p Params) []util.Cell {
 
 func makeCall(client *rpc.Client, world [][]byte, workernum int, p Params) {
 	request := stubs.Request{World: world, WorkerNum: workernum, Threads: p.Threads, Turns: p.Turns}
-	response := new(stubs.Response)
+	newWorld := copyWorld(world)
+	response := stubs.Response{World: newWorld}
 	client.Call(stubs.TurnHandler, request, response)
+	util.VisualiseMatrix(world, p.ImageWidth, p.ImageHeight)
+	util.VisualiseMatrix(newWorld, p.ImageWidth, p.ImageHeight)
+	util.VisualiseMatrix(response.World, p.ImageWidth, p.ImageHeight)
 	for i := 0; i < p.ImageHeight; i++ {
 		for j := 0; j < p.ImageWidth; j++ {
 			world[i][j] = response.World[i][j]
 		}
 	}
+	util.VisualiseMatrix(world, p.ImageWidth, p.ImageHeight)
+}
+
+func copyWorld(world [][]byte) [][]byte {
+	worldCopy := makeWorld(len(world), len(world[0]))
+	for i := range world {
+		for j := range world[i] {
+			worldCopy[i][j] = world[i][j]
+		}
+	}
+	return worldCopy
+}
+
+func makeWorld(height, width int) [][]byte {
+	world := make([][]byte, height)
+	for i := 0; i < height; i++ {
+		row := make([]byte, width)
+		world[i] = row
+	}
+	return world
 }
 
 // distributor divides the work between workers and interacts with other goroutines.
 func distributor(p Params, c distributorChannels) {
 
 	// TODO: Create a 2D slice to store the world.
-	var world = make([][]byte, p.ImageHeight)
-	for i := 0; i < p.ImageHeight; i++ {
-		row := make([]byte, p.ImageWidth)
-		world[i] = row
-	}
+	world := makeWorld(p.ImageHeight, p.ImageWidth)
 	turn := 0
 	c.ioCommand <- ioInput
 	filename := strconv.Itoa(p.ImageHeight) + "x" + strconv.Itoa(p.ImageWidth)
@@ -67,12 +88,16 @@ func distributor(p Params, c distributorChannels) {
 	}
 	// TODO: Execute all turns of the Game of Life.
 	if p.Threads == 1 {
-		server := flag.String("server", "127.0.0.1:8030", "IP:port string to connect to as server")
+		server := "127.0.0.1:8030"
 		flag.Parse()
-		client, _ := rpc.Dial("tcp", *server)
+		client, err := rpc.Dial("tcp", server)
+		if err != nil {
+			log.Fatal("dialing:", err)
+		}
 		defer client.Close()
 		makeCall(client, world, 0, p)
 		fmt.Println("Call made")
+		util.VisualiseMatrix(world, p.ImageWidth, p.ImageHeight)
 	}
 	// TODO: Report the final state using FinalTurnCompleteEvent.
 	// sends event to IO saying final turn is completed
