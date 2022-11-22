@@ -1,6 +1,6 @@
 package stubs
 
-var TurnHandler = "BoardOperations/CalculateNextBoard"
+var TurnHandler = "BoardOperations.CalculateNextBoard"
 
 // var CellHandler = "BoardOperations/GetAliveCells"
 

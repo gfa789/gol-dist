@@ -38,9 +38,9 @@ func getAliveCells(world [][]byte, p Params) []util.Cell {
 
 func makeCall(client *rpc.Client, world [][]byte, workernum int, p Params) {
 	request := stubs.Request{World: world, WorkerNum: workernum, Threads: p.Threads, Turns: p.Turns}
-	newWorld := copyWorld(world)
-	response := stubs.Response{World: newWorld}
+	response := new(stubs.Response)
 	client.Call(stubs.TurnHandler, request, response)
+	// util.VisualiseMatrix(response.World, p.ImageWidth, p.ImageHeight)
 	for i := 0; i < p.ImageHeight; i++ {
 		for j := 0; j < p.ImageWidth; j++ {
 			world[i][j] = response.World[i][j]
@@ -48,15 +48,15 @@ func makeCall(client *rpc.Client, world [][]byte, workernum int, p Params) {
 	}
 }
 
-func copyWorld(world [][]byte) [][]byte {
-	worldCopy := makeWorld(len(world), len(world[0]))
-	for i := range world {
-		for j := range world[i] {
-			worldCopy[i][j] = world[i][j]
-		}
-	}
-	return worldCopy
-}
+// func copyWorld(world [][]byte) [][]byte {
+// 	worldCopy := makeWorld(len(world), len(world[0]))
+// 	for i := range world {
+// 		for j := range world[i] {
+// 			worldCopy[i][j] = world[i][j]
+// 		}
+// 	}
+// 	return worldCopy
+// }
 
 func makeWorld(height, width int) [][]byte {
 	world := make([][]byte, height)

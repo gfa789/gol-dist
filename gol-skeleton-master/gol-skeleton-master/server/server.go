@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"math"
 	"math/rand"
@@ -44,7 +43,6 @@ func calcLiveNeighbours(world [][]byte, x int, y int) int {
 }
 
 func calculateNextState(world [][]byte, starty, endy int) [][]byte {
-	fmt.Println("calc next state")
 	var change []util.Cell
 	newWorld := make([][]byte, endy-starty)
 	width := len(world[0])
@@ -97,37 +95,27 @@ func makeWorld(height, width int) [][]byte {
 type BoardOperations struct{}
 
 func (s *BoardOperations) CalculateNextBoard(req stubs.Request, res *stubs.Response) (err error) {
-	fmt.Println("Method called")
 	height := len(req.World)
-	width := len(req.World[0])
+	// width := len(req.World[0])
 	starth := int(math.Ceil(float64(req.WorkerNum) * (float64(height) / float64(req.Threads))))
 	endh := int(math.Ceil(float64(req.WorkerNum+1) * (float64(height) / float64(req.Threads))))
 	newWorld := copyWorld(req.World)
-	fmt.Println("Got World")
 	for i := 0; i < req.Turns; i++ {
-		fmt.Println("Turn Done")
 		newWorld = calculateNextState(newWorld, starth, endh)
 	}
-	for h := 0; h < height; h++ {
-		for w := 0; w < width; w++ {
-			res.World[h][w] = newWorld[h][w]
-		}
-	}
+	*res = stubs.Response{World: newWorld}
 	return
 }
 
 func main() {
-	fmt.Println("Listening")
 	pAddr := flag.String("port", "8030", "Port to listen on")
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
 	rpc.Register(&BoardOperations{})
-	fmt.Println("Listening on port ", *pAddr)
 	listener, err := net.Listen("tcp", ":"+*pAddr)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	fmt.Println(listener)
 	defer listener.Close()
 	rpc.Accept(listener)
 }
