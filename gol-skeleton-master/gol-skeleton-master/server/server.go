@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"math"
 	"math/rand"
 	"net"
@@ -43,6 +44,7 @@ func calcLiveNeighbours(world [][]byte, x int, y int) int {
 }
 
 func calculateNextState(world [][]byte, starty, endy int) [][]byte {
+	fmt.Println("calc next state")
 	var change []util.Cell
 	newWorld := make([][]byte, endy-starty)
 	width := len(world[0])
@@ -73,19 +75,43 @@ func calculateNextState(world [][]byte, starty, endy int) [][]byte {
 	}
 	return newWorld
 }
+func copyWorld(world [][]byte) [][]byte {
+	worldCopy := makeWorld(len(world), len(world[0]))
+	for i := range world {
+		for j := range world[i] {
+			worldCopy[i][j] = world[i][j]
+		}
+	}
+	return worldCopy
+}
+
+func makeWorld(height, width int) [][]byte {
+	world := make([][]byte, height)
+	for i := 0; i < height; i++ {
+		row := make([]byte, width)
+		world[i] = row
+	}
+	return world
+}
 
 type BoardOperations struct{}
 
 func (s *BoardOperations) CalculateNextBoard(req stubs.Request, res *stubs.Response) (err error) {
 	fmt.Println("Method called")
 	height := len(req.World)
-	// width := len(req.World[0])
+	width := len(req.World[0])
 	starth := int(math.Ceil(float64(req.WorkerNum) * (float64(height) / float64(req.Threads))))
 	endh := int(math.Ceil(float64(req.WorkerNum+1) * (float64(height) / float64(req.Threads))))
+	newWorld := copyWorld(req.World)
 	fmt.Println("Got World")
-	for i := 0; i < req.Turns-1; i++ {
+	for i := 0; i < req.Turns; i++ {
 		fmt.Println("Turn Done")
-		res.World = calculateNextState(res.World, starth, endh)
+		newWorld = calculateNextState(newWorld, starth, endh)
+	}
+	for h := 0; h < height; h++ {
+		for w := 0; w < width; w++ {
+			res.World[h][w] = newWorld[h][w]
+		}
 	}
 	return
 }
@@ -96,8 +122,12 @@ func main() {
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
 	rpc.Register(&BoardOperations{})
-	listener, _ := net.Listen("tcp", ":"+*pAddr)
+	fmt.Println("Listening on port ", *pAddr)
+	listener, err := net.Listen("tcp", ":"+*pAddr)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	fmt.Println(listener)
 	defer listener.Close()
 	rpc.Accept(listener)
-	fmt.Println("Listener accepted")
 }

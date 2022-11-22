@@ -7,10 +7,7 @@ var TurnHandler = "BoardOperations/CalculateNextBoard"
 // var PremiumReverseHandler = "SecretStringOperations.FastReverse"
 
 type Response struct {
-	World     [][]byte
-	WorkerNum int
-	Threads   int
-	Turns     int
+	World [][]byte
 }
 
 type Request struct {

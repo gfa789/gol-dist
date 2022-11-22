@@ -1,7 +1,6 @@
 package gol
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/rpc"
@@ -42,15 +41,11 @@ func makeCall(client *rpc.Client, world [][]byte, workernum int, p Params) {
 	newWorld := copyWorld(world)
 	response := stubs.Response{World: newWorld}
 	client.Call(stubs.TurnHandler, request, response)
-	util.VisualiseMatrix(world, p.ImageWidth, p.ImageHeight)
-	util.VisualiseMatrix(newWorld, p.ImageWidth, p.ImageHeight)
-	util.VisualiseMatrix(response.World, p.ImageWidth, p.ImageHeight)
 	for i := 0; i < p.ImageHeight; i++ {
 		for j := 0; j < p.ImageWidth; j++ {
 			world[i][j] = response.World[i][j]
 		}
 	}
-	util.VisualiseMatrix(world, p.ImageWidth, p.ImageHeight)
 }
 
 func copyWorld(world [][]byte) [][]byte {
@@ -89,7 +84,7 @@ func distributor(p Params, c distributorChannels) {
 	// TODO: Execute all turns of the Game of Life.
 	if p.Threads == 1 {
 		server := "127.0.0.1:8030"
-		flag.Parse()
+		// flag.Parse()
 		client, err := rpc.Dial("tcp", server)
 		if err != nil {
 			log.Fatal("dialing:", err)
@@ -97,7 +92,6 @@ func distributor(p Params, c distributorChannels) {
 		defer client.Close()
 		makeCall(client, world, 0, p)
 		fmt.Println("Call made")
-		util.VisualiseMatrix(world, p.ImageWidth, p.ImageHeight)
 	}
 	// TODO: Report the final state using FinalTurnCompleteEvent.
 	// sends event to IO saying final turn is completed
