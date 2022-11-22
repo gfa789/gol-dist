@@ -9,6 +9,7 @@ var CellHandler = "BoardOperations.GetAliveCells"
 type Response struct {
 	World      [][]byte
 	AliveCells int
+	Turn       int
 }
 
 type Request struct {

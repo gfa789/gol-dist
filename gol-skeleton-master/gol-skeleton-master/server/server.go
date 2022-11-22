@@ -13,6 +13,9 @@ import (
 	"uk.ac.bris.cs/gameoflife/util"
 )
 
+var turn int
+var world [][]byte
+
 func mod(x int, y int) int {
 	a := x % y
 	if a < 0 {
@@ -73,6 +76,19 @@ func calculateNextState(world [][]byte, starty, endy int) [][]byte {
 	}
 	return newWorld
 }
+
+func getAliveCells(world [][]byte, width, height int) int {
+	aliveCells := 0
+	for i := 0; i < height; i++ {
+		for j := 0; j < width; j++ {
+			if world[i][j] == 255 {
+				aliveCells++
+			}
+		}
+	}
+	return aliveCells
+}
+
 func copyWorld(world [][]byte) [][]byte {
 	worldCopy := makeWorld(len(world), len(world[0]))
 	for i := range world {
@@ -95,6 +111,7 @@ func makeWorld(height, width int) [][]byte {
 type BoardOperations struct{}
 
 func (s *BoardOperations) CalculateNextBoard(req stubs.Request, res *stubs.Response) (err error) {
+
 	height := len(req.World)
 	// width := len(req.World[0])
 	starth := int(math.Ceil(float64(req.WorkerNum) * (float64(height) / float64(req.Threads))))
@@ -102,6 +119,8 @@ func (s *BoardOperations) CalculateNextBoard(req stubs.Request, res *stubs.Respo
 	newWorld := copyWorld(req.World)
 	for i := 0; i < req.Turns; i++ {
 		newWorld = calculateNextState(newWorld, starth, endh)
+		turn++
+		world = copyWorld(newWorld)
 	}
 	*res = stubs.Response{World: newWorld}
 	return
@@ -109,14 +128,14 @@ func (s *BoardOperations) CalculateNextBoard(req stubs.Request, res *stubs.Respo
 
 func (s *BoardOperations) GetAliveCells(req stubs.Request, res *stubs.Response) (err error) {
 	aliveCount := 0
-	for i := range req.World {
-		for j := range req.World[0] {
-			if req.World[i][j] == 255 {
+	for i := range world {
+		for j := range world[0] {
+			if world[i][j] == 255 {
 				aliveCount++
 			}
 		}
 	}
-	*res = stubs.Response{AliveCells: aliveCount}
+	*res = stubs.Response{World: world, AliveCells: aliveCount, Turn: turn}
 	return
 }
 
