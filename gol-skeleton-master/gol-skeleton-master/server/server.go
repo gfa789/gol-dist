@@ -107,6 +107,19 @@ func (s *BoardOperations) CalculateNextBoard(req stubs.Request, res *stubs.Respo
 	return
 }
 
+func (s *BoardOperations) GetAliveCells(req stubs.Request, res *stubs.Response) (err error) {
+	aliveCount := 0
+	for i := range req.World {
+		for j := range req.World[0] {
+			if req.World[i][j] == 255 {
+				aliveCount++
+			}
+		}
+	}
+	*res = stubs.Response{AliveCells: aliveCount}
+	return
+}
+
 func main() {
 	pAddr := flag.String("port", "8030", "Port to listen on")
 	flag.Parse()

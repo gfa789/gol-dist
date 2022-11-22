@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/rpc"
 	"strconv"
+	"time"
 
 	"uk.ac.bris.cs/gameoflife/stubs"
 	"uk.ac.bris.cs/gameoflife/util"
@@ -82,6 +83,22 @@ func distributor(p Params, c distributorChannels) {
 		}
 	}
 	// TODO: Execute all turns of the Game of Life.
+	ticker := time.NewTicker(2 * time.Second)
+	go func() {
+		select {
+		case <-ticker.C:
+			server := "127.0.0.1:8030"
+			client, err := rpc.Dial("tcp", server)
+			if err != nil {
+				log.Fatal("dialing:", err)
+			}
+			req := stubs.Request{World: world}
+			res := new(stubs.Response)
+			client.Call(stubs.CellHandler, req, res)
+			c.events <- AliveCellsCount{}
+		default:
+		}
+	}()
 	if p.Threads == 1 {
 		server := "127.0.0.1:8030"
 		// flag.Parse()

@@ -2,12 +2,13 @@ package stubs
 
 var TurnHandler = "BoardOperations.CalculateNextBoard"
 
-// var CellHandler = "BoardOperations/GetAliveCells"
+var CellHandler = "BoardOperations.GetAliveCells"
 
 // var PremiumReverseHandler = "SecretStringOperations.FastReverse"
 
 type Response struct {
-	World [][]byte
+	World      [][]byte
+	AliveCells int
 }
 
 type Request struct {
